@@ -129,6 +129,18 @@ export default function stringifyObject(input, options, pad) {
 					value = options.transform(input, element, value);
 				}
 
+				function isMethodFunction(k, o) {
+					const f = o[k];
+					if (typeof f !== 'function') return null
+					if ('prototype' in f) return null;
+					const s = f.toString();
+					if (s.charAt(0) == '(') return null;
+					if (/^[_$a-zA-Z0-9]+\s*=>/.test(s)) return null;
+					return s;
+				}
+				const method = isMethodFunction(element, input);
+				if (method) return tokens.indent + method + eol;
+
 				return tokens.indent + String(key) + ': ' + value + eol;
 			}).join('') + tokens.pad + '}';
 

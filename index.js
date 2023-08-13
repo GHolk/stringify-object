@@ -129,17 +129,7 @@ export default function stringifyObject(input, options, pad) {
 					value = options.transform(input, element, value);
 				}
 
-				function isMethodFunction(k, o) {
-					const f = o[k];
-					if (typeof f !== 'function') return null
-					if ('prototype' in f) return null;
-					const s = f.toString();
-					if (s.charAt(0) == '(') return null;
-                    const re = /^[_$a-zA-Z0-9]+(\s+|\/\/.*\n|\/\*.*?\*\/)*=>/
-					if (re.test(s)) return null;
-					return s;
-				}
-				const method = isMethodFunction(element, input);
+				const method = isMethodFunction(input[element]);
 				if (method) return tokens.indent + method + eol;
 
 				return tokens.indent + String(key) + ': ' + value + eol;
@@ -161,4 +151,35 @@ export default function stringifyObject(input, options, pad) {
 		input = input.replace(/'/g, '\\\'');
 		return `'${input}'`;
 	})(input, options, pad);
+}
+
+// let obj = {methodFunction() { return 'method' }, prop: 0}
+export function isMethodFunction(f) {
+	if (typeof f !== 'function') return null;
+
+	// arrow and method have no prototype
+	if ('prototype' in f) return null;
+
+	// comment, async, variable, =>
+	const comment = /^(\s+|\/\/.*\n|\/\*.*?\*\/)*/;
+	const variable = /^[_$a-zA-Z0-9]+/;
+	const arrow = /^=>/;
+
+	const source = f.toString();
+	let s = source;
+
+	// remove async prefix if async function
+	if (f.constructor.name === 'AsyncFunction') {
+		s = s.slice(5).replace(comment, '');
+	}
+
+	// only arrow function would be bracket prefix
+	if (s.charAt(0) === '(') return null; // (...) => {}
+
+	// variable => ...
+	if (variable.test(s)) {
+		s = s.replace(variable, '').replace(comment, '');
+		if (arrow.test(s)) return null; // x => ...
+	}
+	return source;
 }

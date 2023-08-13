@@ -135,7 +135,8 @@ export default function stringifyObject(input, options, pad) {
 					if ('prototype' in f) return null;
 					const s = f.toString();
 					if (s.charAt(0) == '(') return null;
-					if (/^[_$a-zA-Z0-9]+\s*=>/.test(s)) return null;
+                    const re = /^[_$a-zA-Z0-9]+(\s+|\/\/.*\n|\/\*.*?\*\/)*=>/
+					if (re.test(s)) return null;
 					return s;
 				}
 				const method = isMethodFunction(element, input);

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import test from 'ava';
-import stringifyObject from '../index.js';
+import stringifyObject, {isMethodFunction} from '../index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -209,4 +209,46 @@ test('handle symbols', t => {
 		[Symbol()]: 'undef'
 	};
 	t.is(stringifyObject(object), '{\n\t[Symbol(\'unique\')]: Symbol(\'unique\'),\n\t[Symbol.for(\'registry\')]: [\n\t\tSymbol.for(\'registry\'),\n\t\t2\n\t],\n\t[Symbol.iterator]: {\n\t\tk: Symbol.iterator\n\t},\n\t[Symbol()]: \'undef\'\n}');
+});
+
+test('method function test', t => {
+    const arrow = [
+        async_v => 0, async => 0, async x => 0, async /* foo => */ => 0,
+        /* c1 */ async /* => () */ /*c2*/ x /* c3 */ /* cm4 */ => /* cm5 */ 3,
+        async_v/**/ => 0, async() => 0, async(x) => 0, async (/* cm */ x) => 0,
+        async/* foo => */=> 0, async/* foo x*/x=> 0, async/* foo => */x=> 0,
+        async /* => () */ /*yoy*/ /* comment */ /* cm2 */ => /* cm3 */ 3,
+        async $=>0
+    ];
+    arrow.forEach(f => t.is(isMethodFunction(f), null));
+    const obj = [
+        {m() {}}, {m_m() {}}, {_1() {}}, {_1_(){}}, {' '() {}}, {' , '(){}},
+        {m /* c */ () {}}, {m_m /**/ () {}}, {__1 /*c1*/ /*c2*/() {}},
+        {_1__ // comment to line end
+         (){}}, {' ' // c2eol
+                 /* c2 */ () /*c3*/ {}}, {/*c4*/' , '(){}},
+        {1() {}}, {'1.0'() {}}, {1_1() {}}, {'1_'(){}},
+        {' () => 0 '() {}}, {'x=>{}'(){}}, {async() {}},
+        {$$/**/() {}}, {'m()'() {}}, {'"q"'() {}}, {'\'q'(){}},
+        {'/* c */ '() {}}, {'// '(){}}, {''(){}},
+        {'\n // \\'() {}}, {'{}'() {}}, {'(\')'() {}}, {'\''(){}}
+    ];
+    obj.forEach(o => {
+        const m = Object.keys(o)[0];
+        t.is(typeof isMethodFunction(o[m]), 'string');
+    });
+    t.not(isMethodFunction(({async() {}}).async), null);
+    t.is(isMethodFunction(async()=>{}), null);
+});
+
+test('method function stringify', t => {
+    const obj = {
+        method() {},
+        arrow: () => {},
+        async ma() {},
+        asynca: async() => {},
+        asynca2: async => {},
+        async() {}
+    };
+    t.is(stringifyObject(obj), '{\n\tmethod() {},\n\tarrow: () => {},\n\tasync ma() {},\n\tasynca: async() => {},\n\tasynca2: async => {},\n\tasync() {}\n}');
 });

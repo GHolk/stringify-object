@@ -212,43 +212,46 @@ test('handle symbols', t => {
 });
 
 test('method function test', t => {
-    const arrow = [
-        async_v => 0, async => 0, async x => 0, async /* foo => */ => 0,
-        /* c1 */ async /* => () */ /*c2*/ x /* c3 */ /* cm4 */ => /* cm5 */ 3,
-        async_v/**/ => 0, async() => 0, async(x) => 0, async (/* cm */ x) => 0,
-        async/* foo => */=> 0, async/* foo x*/x=> 0, async/* foo => */x=> 0,
-        async /* => () */ /*yoy*/ /* comment */ /* cm2 */ => /* cm3 */ 3,
-        async $=>0
-    ];
-    arrow.forEach(f => t.is(isMethodFunction(f), null));
-    const obj = [
-        {m() {}}, {m_m() {}}, {_1() {}}, {_1_(){}}, {' '() {}}, {' , '(){}},
-        {m /* c */ () {}}, {m_m /**/ () {}}, {__1 /*c1*/ /*c2*/() {}},
-        {_1__ // comment to line end
-         (){}}, {' ' // c2eol
-                 /* c2 */ () /*c3*/ {}}, {/*c4*/' , '(){}},
-        {1() {}}, {'1.0'() {}}, {1_1() {}}, {'1_'(){}},
-        {' () => 0 '() {}}, {'x=>{}'(){}}, {async() {}},
-        {$$/**/() {}}, {'m()'() {}}, {'"q"'() {}}, {'\'q'(){}},
-        {'/* c */ '() {}}, {'// '(){}}, {''(){}},
-        {'\n // \\'() {}}, {'{}'() {}}, {'(\')'() {}}, {'\''(){}}
-    ];
-    obj.forEach(o => {
-        const m = Object.keys(o)[0];
-        t.is(typeof isMethodFunction(o[m]), 'string');
-    });
-    t.not(isMethodFunction(({async() {}}).async), null);
-    t.is(isMethodFunction(async()=>{}), null);
+	const arrow = [
+		async_v => 0, async => 0, async x => 0, async /* foo => */ => 0,
+		/* c1 */ async /* => () */ /*c2*/ x /* c3 */ /* cm4 */ => /* cm5 */ 3,
+		async_v/**/ => 0, async() => 0, async(x) => 0, async (/* cm */ x) => 0,
+		async/* foo => */=> 0, async/* foo x*/x=> 0, async/* foo => */x=> 0,
+		async /* => () */ /*yoy*/ /* comment */ /* cm2 */ => /* cm3 */ 3,
+		async $=>0
+	];
+	arrow.forEach(f => t.is(isMethodFunction(f), null));
+	const obj = [
+		{m() {}}, {m_m() {}}, {_1() {}}, {_1_(){}}, {' '() {}}, {' , '(){}},
+		{m /* c */ () {}}, {m_m /**/ () {}}, {__1 /*c1*/ /*c2*/() {}},
+		{_1__ // comment to line end
+		 (){}}, {' ' // c2eol
+				 /* c2 */ () /*c3*/ {}}, {/*c4*/' , '(){}},
+		{1() {}}, {'1.0'() {}}, {1_1() {}}, {'1_'(){}},
+		{' () => 0 '() {}}, {'x=>{}'(){}}, {async() {}},
+		{$$/**/() {}}, {'m()'() {}}, {'"q"'() {}}, {'\'q'(){}},
+		{'/* c */ '() {}}, {'// '(){}}, {''(){}},
+		{'\n // \\'() {}}, {'{}'() {}}, {'(\')'() {}}, {'\''(){}}
+	];
+	obj.map(o => Object.values(o)).flat().forEach(m => {
+		t.not(isMethodFunction(m), null);
+	});
+	t.not(isMethodFunction(({async() {}}).async), null);
+	t.is(isMethodFunction(async()=>{}), null);
+
+	t.not(isMethodFunction(({function() {}})['function']), null);
+	t.is(isMethodFunction(function() {}), null);
 });
 
 test('method function stringify', t => {
-    const obj = {
-        method() {},
-        arrow: () => {},
-        async ma() {},
-        asynca: async() => {},
-        asynca2: async => {},
-        async() {}
-    };
-    t.is(stringifyObject(obj), '{\n\tmethod() {},\n\tarrow: () => {},\n\tasync ma() {},\n\tasynca: async() => {},\n\tasynca2: async => {},\n\tasync() {}\n}');
+	const obj = {
+		method() {},
+		arrow: () => {},
+		async ma() {},
+		asynca: async() => {},
+		asynca2: async => {},
+		async() {},
+		function() {}
+	};
+	t.is(stringifyObject(obj), '{\n\tmethod() {},\n\tarrow: () => {},\n\tasync ma() {},\n\tasynca: async() => {},\n\tasynca2: async => {},\n\tasync() {},\n\tfunction() {}\n}');
 });

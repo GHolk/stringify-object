@@ -54,9 +54,20 @@ export default function stringifyObject(input, options, pad) {
 			|| input === undefined
 			|| typeof input === 'number'
 			|| typeof input === 'boolean'
-			|| typeof input === 'function'
 			|| isRegexp(input)
 		) {
+			return String(input);
+		}
+
+		if (typeof input === 'function') {
+			const method = isMethodFunction(input);
+			if (method) {
+				const fn = input.constructor.name;
+				if (fn.slice(0,5) === 'Async') {
+					return 'async function' + method.slice(5);
+				}
+				return 'function ' + method;
+			}
 			return String(input);
 		}
 
@@ -153,33 +164,34 @@ export default function stringifyObject(input, options, pad) {
 	})(input, options, pad);
 }
 
-// let obj = {methodFunction() { return 'method' }, prop: 0}
 export function isMethodFunction(f) {
 	if (typeof f !== 'function') return null;
 
-	// arrow and method have no prototype
-	if ('prototype' in f) return null;
+	const fn = f.constructor.name;
+	const source = String(f);
+	let s = source;
 
 	// comment, async, variable, =>
 	const comment = /^(\s+|\/\/.*\n|\/\*.*?\*\/)*/;
 	const variable = /^[_$a-zA-Z0-9]+/;
 	const arrow = /^=>/;
+	const func = /^function(\s|\(|\/|\*)/;
 
-	const source = f.toString();
-	let s = source;
-
-	// remove async prefix if async function
-	if (f.constructor.name === 'AsyncFunction') {
+	if (fn == 'AsyncFunction' || fn == 'AsyncGeneratorFunction') {
 		s = s.slice(5).replace(comment, '');
 	}
-
-	// only arrow function would be bracket prefix
-	if (s.charAt(0) === '(') return null; // (...) => {}
-
-	// variable => ...
+	if (s.charAt(0) === '(') {
+		// (...) => ...
+		return null;
+	}
+	if (func.test(s) && f.name !== 'function') {
+		// exclude function as method name {function() {}}
+		return null;
+	}
 	if (variable.test(s)) {
+		// remove x of `x => {}`
 		s = s.replace(variable, '').replace(comment, '');
-		if (arrow.test(s)) return null; // x => ...
+		if (arrow.test(s)) return null;
 	}
 	return source;
 }

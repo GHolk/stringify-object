@@ -176,6 +176,7 @@ export function isMethodFunction(f) {
 	const variable = /^[_$a-zA-Z0-9]+/;
 	const arrow = /^=>/;
 	const func = /^function(\s|\(|\/|\*)/;
+	const clas = /^class(\s|\{|\/|\*)/;
 
 	if (fn == 'AsyncFunction' || fn == 'AsyncGeneratorFunction') {
 		s = s.slice(5).replace(comment, '');
@@ -186,6 +187,10 @@ export function isMethodFunction(f) {
 	}
 	if (func.test(s) && f.name !== 'function') {
 		// exclude function as method name {function() {}}
+		return null;
+	}
+	if (clas.test(s) && f.name !== 'class') {
+		// exclude class as method name {class() {}}
 		return null;
 	}
 	if (variable.test(s)) {

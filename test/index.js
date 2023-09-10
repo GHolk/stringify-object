@@ -251,7 +251,9 @@ test('method function stringify', t => {
 		asynca: async() => {},
 		asynca2: async => {},
 		async() {},
+		class() {},
+		klass: class {},
 		function() {}
 	};
-	t.is(stringifyObject(obj), '{\n\tmethod() {},\n\tarrow: () => {},\n\tasync ma() {},\n\tasynca: async() => {},\n\tasynca2: async => {},\n\tasync() {},\n\tfunction() {}\n}');
+	t.is(stringifyObject(obj), '{\n\tmethod() {},\n\tarrow: () => {},\n\tasync ma() {},\n\tasynca: async() => {},\n\tasynca2: async => {},\n\tasync() {},\n\tclass() {},\n\tklass: class {},\n\tfunction() {}\n}');
 });
